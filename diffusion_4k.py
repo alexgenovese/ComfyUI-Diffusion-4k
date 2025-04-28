@@ -24,10 +24,10 @@ class FluxImageGenerator:
         flux_dir = os.path.join(folder_paths.models_dir, "checkpoints")
         os.makedirs(flux_dir, exist_ok=True)
         
-        # Scan for available checkpoints
+        # Scan for available checkpoints - only include directories (diffusion models)
         for item in os.listdir(flux_dir):
             item_path = os.path.join(flux_dir, item)
-            if os.path.isdir(item_path) or item.lower().endswith(('.safetensors', '.sft')):
+            if os.path.isdir(item_path):  # Only include directories
                 checkpoint_list.append(item)
                 
         # If no checkpoints found, add a default option
@@ -56,39 +56,25 @@ class FluxImageGenerator:
 
     def check_checkpoint(self, checkpoint_name):
         """Check if the checkpoint exists, download if not."""
+        # Ensure we're looking for a directory-based diffusion model
         checkpoint_path = os.path.join(folder_paths.models_dir, "checkpoints", checkpoint_name)
         
-        # Handle both file-based and directory-based checkpoints
-        if os.path.exists(checkpoint_path):
-            if os.path.isdir(checkpoint_path):
-                return checkpoint_path
-            else:
-                # If it's a file, return the directory containing the file
-                return os.path.dirname(checkpoint_path)
-        else:
-            print(f"Checkpoint not found at {checkpoint_path}. Downloading from Hugging Face...")
+        if not os.path.exists(checkpoint_path) or not os.path.isdir(checkpoint_path):
+            print(f"Diffusion model not found at {checkpoint_path}. Downloading from Hugging Face...")
             try:
-                # For file-based checkpoints, use the base name (without extension) for the folder
-                if checkpoint_name.lower().endswith(('.safetensors', '.sft')):
-                    base_name = os.path.splitext(checkpoint_name)[0]
-                else:
-                    base_name = checkpoint_name
-                
-                download_path = os.path.join(folder_paths.models_dir, "checkpoints", "flux", base_name)
-                
                 # Create directory if it doesn't exist
-                os.makedirs(download_path, exist_ok=True)
+                os.makedirs(checkpoint_path, exist_ok=True)
                 
                 # Download the model from Hugging Face
                 snapshot_download(
                     repo_id="zhang0jhon/flux_wavelet", 
-                    local_dir=download_path
+                    local_dir=checkpoint_path
                 )
-                print(f"Checkpoint downloaded successfully to {download_path}")
-                return download_path
+                print(f"Checkpoint downloaded successfully to {checkpoint_path}")
             except Exception as e:
                 print(f"Error downloading checkpoint: {e}")
                 raise
+        return checkpoint_path
 
     def generate(self, prompt, checkpoint, height, width, guidance_scale, num_inference_steps, seed,
                 max_sequence_length=512, partitioned=True):
