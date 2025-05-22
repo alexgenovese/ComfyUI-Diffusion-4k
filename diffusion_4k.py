@@ -37,7 +37,7 @@ class FluxImageGenerator:
         return {
             "required": {
                 "prompt": ("STRING", {"multiline": True}),
-                "checkpoint": (checkpoint_list, {"default": checkpoint_list[0]}),
+                "checkpoint": ("MODEL",),
                 "height": ("INT", {"default": 4096, "min": 512, "max": 8192, "step": 64}),
                 "width": ("INT", {"default": 4096, "min": 512, "max": 8192, "step": 64}),
                 "guidance_scale": ("FLOAT", {"default": 7.0, "min": 1.0, "max": 20.0, "step": 0.1}),
